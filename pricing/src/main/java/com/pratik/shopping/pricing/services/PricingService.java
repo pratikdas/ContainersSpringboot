@@ -6,8 +6,8 @@ package com.pratik.shopping.pricing.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.pratik.shopping.pricing.PriceRepository;
 import com.pratik.shopping.pricing.models.ProductPrice;
+import com.pratik.shopping.pricing.repositories.PriceRepository;
 
 import lombok.extern.slf4j.Slf4j;
 

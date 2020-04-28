@@ -3,74 +3,81 @@
  */
 package com.pratik.shopping.catalog.services;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.jayway.jsonpath.JsonPath;
 import com.pratik.shopping.catalog.CatalogItem;
-import com.pratik.shopping.catalog.InventoryItem;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.tcp.TcpClient;
 
 /**
- * @author fab
+ * @author Pratik Das
  *
  */
 @Service
+@Slf4j
 public class CatalogService {
+	
+	
+	public CatalogItem getCatalogItemByName(final String productName) {
 
-	public List<CatalogItem> getCatalogItemsByCategory(final String category) {
-
-		List<CatalogItem> catalogItems = new ArrayList<>();
+		// fetch items For Sale from inventory microservice
+		Integer itemsForSale = fetchItemsForSaleFromInventory(productName);
+		
 		// fetch price from pricing engine microservice
-		List<InventoryItem> inventoryItems = fetchInventoryItems(category) ;
-
-		// fetch items in stock from inventory microservice
-		inventoryItems.forEach(item->{
-			double price = fetchPrice(item.getName());
-			CatalogItem catalogItem = CatalogItem.builder().id(UUID.randomUUID().toString())
-					.category("cat 1")
-					.itemsInStock(item.getItemsInStock())
-					.price(price)
-					.name(item.getName())
-					.build();
-			catalogItems.add(catalogItem );
-		});
-
-		return catalogItems;
-	}
-
-	private double fetchPrice(final String itemName) {
-		Map<String, Double> priceMap = new HashMap<>();
-
-		return 1.5;
-
-	}
-
-	private List<InventoryItem> fetchInventoryItems(final String category) {
-		List<InventoryItem> inventoryItems = new ArrayList<>();
+        Double price = fetchPriceFromPricingService(productName);
 		
-		InventoryItem e;
-		for (int i = 0; i < 15; i++) {
-			e = InventoryItem.builder().name("name "+i).itemsInStock(i + 1).build();
-			inventoryItems.add(e);
-		}
-		
-		return inventoryItems;
+        CatalogItem catalogItem = CatalogItem.builder().id(UUID.randomUUID().toString())
+				.category("cat 1")
+				.itemsInStock(itemsForSale)
+				.price(price)
+				.name(productName)
+				.build();
+		return catalogItem;
 	}
 
-	private WebClient getWebClient() {
+
+
+	private double fetchPriceFromPricingService(final String productName) {
+		WebClient webClient = getWebClient("http://localhost:8082");
+		Mono<String> apiResponse = webClient.get().uri("/product/"+productName+ "/price")
+				                       .retrieve()
+				                       .bodyToMono(String.class);
+		String jsonResponsePrice = apiResponse.block();
+		log.info("jsonResponse1 product {}", jsonResponsePrice);
+        Double price = JsonPath.read(jsonResponsePrice, "$.price");
+
+        return price;
+
+	}
+
+	private Integer fetchItemsForSaleFromInventory(final String productName) {
+		WebClient webClient = getWebClient("http://localhost:8081");
+		Mono<String> apiResponse = webClient.get().uri("/inventory/"+productName)
+					                 .retrieve()
+					                 .bodyToMono(String.class);
+		String jsonResponseInventory = apiResponse.block();
+		
+		
+		log.info("jsonResponse inventory {}", jsonResponseInventory);
+		Integer itemsForSale = JsonPath.read(jsonResponseInventory, "$.itemsInStock");
+		return itemsForSale;
+	}
+
+	private WebClient getWebClient(final String baseUrl) {
 		TcpClient tcpClient = TcpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
 				.doOnConnected(connection -> {
 					connection.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS));
@@ -78,6 +85,8 @@ public class CatalogService {
 				});
 
 		WebClient client = WebClient.builder()
+				.baseUrl(baseUrl)
+		        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 				.clientConnector(new ReactorClientHttpConnector(HttpClient.from(tcpClient))).build();
 		return client;
 	}

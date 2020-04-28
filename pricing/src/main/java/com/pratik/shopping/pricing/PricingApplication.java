@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import com.pratik.shopping.pricing.models.ProductPrice;
+import com.pratik.shopping.pricing.repositories.PriceRepository;
 
 @SpringBootApplication
 public class PricingApplication {
