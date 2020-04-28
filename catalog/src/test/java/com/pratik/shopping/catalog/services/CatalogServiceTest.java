@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.pratik.shopping.catalog.CatalogItem;
+import com.pratik.shopping.catalog.config.AppProperties;
 
 /**
  * @author Pratik Das
@@ -25,7 +26,9 @@ class CatalogServiceTest {
 	 */
 	@BeforeEach
 	void setUp() throws Exception {
-		catalogService = new CatalogService();
+		AppProperties appProperties = new AppProperties();
+		
+		catalogService = new CatalogService(appProperties);
 	}
 	
 	@Test

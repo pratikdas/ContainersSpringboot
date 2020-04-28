@@ -6,6 +6,7 @@ package com.pratik.shopping.catalog.services;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -14,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.jayway.jsonpath.JsonPath;
 import com.pratik.shopping.catalog.CatalogItem;
+import com.pratik.shopping.catalog.config.AppProperties;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -32,6 +34,16 @@ import reactor.netty.tcp.TcpClient;
 public class CatalogService {
 	
 	
+	private AppProperties appProperties;
+	
+	@Autowired
+	public CatalogService(AppProperties appProperties) {
+		super();
+		this.appProperties = appProperties;
+	}
+
+
+
 	public CatalogItem getCatalogItemByName(final String productName) {
 
 		// fetch items For Sale from inventory microservice
@@ -52,7 +64,7 @@ public class CatalogService {
 
 
 	private double fetchPriceFromPricingService(final String productName) {
-		WebClient webClient = getWebClient("http://localhost:8082");
+		WebClient webClient = getWebClient(appProperties.getPricingBaseURL());
 		Mono<String> apiResponse = webClient.get().uri("/product/"+productName+ "/price")
 				                       .retrieve()
 				                       .bodyToMono(String.class);
@@ -65,7 +77,8 @@ public class CatalogService {
 	}
 
 	private Integer fetchItemsForSaleFromInventory(final String productName) {
-		WebClient webClient = getWebClient("http://localhost:8081");
+		log.info("inventory url {}",appProperties.getInventoryBaseURL());
+		WebClient webClient = getWebClient(appProperties.getInventoryBaseURL());
 		Mono<String> apiResponse = webClient.get().uri("/inventory/"+productName)
 					                 .retrieve()
 					                 .bodyToMono(String.class);
