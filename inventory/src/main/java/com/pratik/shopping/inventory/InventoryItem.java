@@ -3,8 +3,10 @@
  */
 package com.pratik.shopping.inventory;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,12 +21,18 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("InventoryItem")
+@Entity
+@Table(name = "INVENTORY_ITEMS")
 public class InventoryItem {
 	
 	@Id
+	@Column(name = "item_id")
 	private String itemID;
+	
+	@Column(name = "product_name")
 	private String productName;
+	
+	@Column(name = "items_in_stock")
 	private Integer itemsInStock;
 
 }

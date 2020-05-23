@@ -33,7 +33,7 @@ class InventoryServiceTest {
 	@BeforeEach
 	void setUp() throws Exception {
 		inventoryRepository = mock(InventoryRepository.class);
-		when(inventoryRepository.findInventoryItemByProductName("Television")).thenReturn(InventoryItem.builder().productName("Television").build());
+		when(inventoryRepository.findByProductName("Television")).thenReturn(InventoryItem.builder().productName("Television").build());
 	}
 
 	/**

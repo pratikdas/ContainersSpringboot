@@ -25,7 +25,7 @@ public class InventoryService {
 	}
 	
 	public InventoryItem getInventoryItems(final String name) {
-		return inventoryRepository.findInventoryItemByProductName(name);
+		return inventoryRepository.findByProductName(name);
 	}
 	
 	
